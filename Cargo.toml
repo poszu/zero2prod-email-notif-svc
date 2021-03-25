@@ -15,6 +15,9 @@ name = "zero2prod"
 
 [dependencies]
 actix-web = "=4.0.0-beta.4"
+serde = { version = "1", features = ["derive"] }
+sqlx = { version = "0.5.1", default-features = false, features = ["runtime-actix-rustls", "macros", "postgres", "uuid", "chrono", "migrate"] }
+config = "0.11.0"
 
 [dev-dependencies]
 actix-rt = "2.1.0"
