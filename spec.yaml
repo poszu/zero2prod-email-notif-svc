@@ -18,7 +18,7 @@ services:
       # Deploy a new version on every commit to `main`!
       # Continuous Deployment, here we come!
       deploy_on_push: true
-      repo: poszu/zero2prod
+      repo: poszu/zero2prod-email-notif-svc
     # Active probe used by DigitalOcean's to ensure our application is healthy
     health_check:
       # The path to our health check endpoint!
