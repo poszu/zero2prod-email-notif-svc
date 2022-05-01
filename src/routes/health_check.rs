@@ -1,5 +1,5 @@
-use actix_web::HttpResponse;
+use actix_web::{HttpResponse, Responder};
 
-pub async fn health_check() -> HttpResponse {
-    HttpResponse::Ok().finish()
+pub async fn health_check() -> impl Responder {
+    HttpResponse::Ok()
 }
