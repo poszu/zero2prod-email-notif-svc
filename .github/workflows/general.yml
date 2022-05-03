@@ -29,7 +29,7 @@ jobs:
 
       - name: Cache dependencies
         id: cache-dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v2
         with:
           path: |
             ~/.cargo/registry
@@ -45,16 +45,17 @@ jobs:
           override: true
 
       - name: Cache sqlx-cli
-        uses: actions/cache@v3
+        uses: actions/cache@v2
         id: cache-sqlx
         with:
           path: |
             ~/.cargo/bin/sqlx
-          key: ${{ runner.os }}-sqlx-${{ env.SQLX_VERSION }}-${{ env.SQLX_FEATURES }}-2
+            ~/.cargo/bin/cargo-sqlx
+          key: ${{ runner.os }}-sqlx-${{ env.SQLX_VERSION }}-${{ env.SQLX_FEATURES }}
 
       - name: Install sqlx-cli
         uses: actions-rs/cargo@v1
-        if: steps.cache-sqlx.outputs.cache-hit != 'true'
+        if: steps.cache-sqlx.outputs.cache-hit == false
         with:
           command: install
           args: >
@@ -122,16 +123,17 @@ jobs:
           override: true
 
       - name: Cache sqlx-cli
-        uses: actions/cache@v3
+        uses: actions/cache@v2
         id: cache-sqlx
         with:
           path: |
             ~/.cargo/bin/sqlx
+            ~/.cargo/bin/cargo-sqlx
           key: ${{ runner.os }}-sqlx-${{ env.SQLX_VERSION }}-${{ env.SQLX_FEATURES }}
 
       - name: Install sqlx-cli
         uses: actions-rs/cargo@v1
-        if: steps.cache-sqlx.outputs.cache-hit != 'true'
+        if: steps.cache-sqlx.outputs.cache-hit == false
         with:
           command: install
           args: >
@@ -147,6 +149,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install postgresql-client -y
           SKIP_DOCKER=true ./scripts/init_db.sh
+
       - name: Run clippy
         uses: actions-rs/clippy-check@v1
         with:
@@ -179,16 +182,17 @@ jobs:
           override: true
 
       - name: Cache sqlx-cli
-        uses: actions/cache@v3
+        uses: actions/cache@v2
         id: cache-sqlx
         with:
           path: |
             ~/.cargo/bin/sqlx
+            ~/.cargo/bin/cargo-sqlx
           key: ${{ runner.os }}-sqlx-${{ env.SQLX_VERSION }}-${{ env.SQLX_FEATURES }}
 
       - name: Install sqlx-cli
         uses: actions-rs/cargo@v1
-        if: steps.cache-sqlx.outputs.cache-hit != 'true'
+        if: steps.cache-sqlx.outputs.cache-hit == false
         with:
           command: install
           args: >
@@ -198,11 +202,13 @@ jobs:
             --features=${{ env.SQLX_FEATURES }}
             --no-default-features
             --locked
+
       - name: Migrate database
         run: |
           sudo apt-get update
           sudo apt-get install postgresql-client -y
           SKIP_DOCKER=true ./scripts/init_db.sh
+
       - name: Run cargo-tarpaulin
         uses: actions-rs/tarpaulin@v0.1
         with:
