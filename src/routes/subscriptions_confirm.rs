@@ -1,4 +1,8 @@
-use actix_web::{web, HttpResponse};
+use std::error::Error;
+
+use actix_web::{web, HttpResponse, ResponseError};
+use anyhow::Context;
+use reqwest::StatusCode;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -7,23 +11,49 @@ pub struct Parameters {
     subscription_token: String,
 }
 
-#[tracing::instrument(name = "Confirm a pending subscriber", skip(parameters, pool))]
-pub async fn confirm(parameters: web::Query<Parameters>, pool: web::Data<PgPool>) -> HttpResponse {
-    let id = match get_subscriber_id_from_token(&pool, &parameters.subscription_token).await {
-        Ok(id) => id,
-        Err(_) => return HttpResponse::InternalServerError().finish(),
-    };
+#[derive(thiserror::Error)]
+pub enum ConfirmEmailError {
+    #[error("Subscriber for '{0}' token was not found")]
+    UnknownToken(String),
+    #[error(transparent)]
+    UnexpectedError(#[from] anyhow::Error),
+}
 
-    match id {
-        // Non-existing token!
-        None => HttpResponse::Unauthorized().finish(),
-        Some(subscriber_id) => {
-            if confirm_subscriber(&pool, subscriber_id).await.is_err() {
-                return HttpResponse::InternalServerError().finish();
-            }
-            HttpResponse::Ok().finish()
+impl std::fmt::Debug for ConfirmEmailError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "{}\n", self)?;
+        let mut current = self.source();
+        while let Some(cause) = current {
+            writeln!(f, "Caused by:\n\t{}", cause)?;
+            current = cause.source();
+        }
+        Ok(())
+    }
+}
+
+impl ResponseError for ConfirmEmailError {
+    fn status_code(&self) -> reqwest::StatusCode {
+        match self {
+            Self::UnknownToken(_) => StatusCode::UNAUTHORIZED,
+            Self::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
+}
+
+#[tracing::instrument(name = "Confirm a pending subscriber", skip(parameters, pool))]
+pub async fn confirm(
+    parameters: web::Query<Parameters>,
+    pool: web::Data<PgPool>,
+) -> Result<HttpResponse, ConfirmEmailError> {
+    let id = get_subscriber_id_from_token(&pool, &parameters.subscription_token)
+        .await
+        .context("Failed to get subsciber_id from token")?
+        .ok_or_else(|| ConfirmEmailError::UnknownToken(parameters.subscription_token.clone()))?;
+
+    confirm_subscriber(&pool, id)
+        .await
+        .context("Failed to confirm subscriber")?;
+    Ok(HttpResponse::Ok().finish())
 }
 
 #[tracing::instrument(name = "Mark subscriber as confirmed", skip(subscriber_id, pool))]
@@ -33,11 +63,7 @@ pub async fn confirm_subscriber(pool: &PgPool, subscriber_id: Uuid) -> Result<()
         subscriber_id
     )
     .execute(pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to execute query: {:?}", e);
-        e
-    })?;
+    .await?;
 
     Ok(())
 }
@@ -52,11 +78,7 @@ pub async fn get_subscriber_id_from_token(
         subscription_token
     )
     .fetch_optional(pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to execute query: {:?}", e);
-        e
-    })?;
+    .await?;
 
     Ok(result.map(|r| r.subscriber_id))
 }
