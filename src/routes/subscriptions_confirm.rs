@@ -1,10 +1,10 @@
-use std::error::Error;
-
 use actix_web::{web, HttpResponse, ResponseError};
 use anyhow::Context;
 use reqwest::StatusCode;
 use sqlx::PgPool;
 use uuid::Uuid;
+
+use super::error_chain_fmt;
 
 #[derive(serde::Deserialize)]
 pub struct Parameters {
@@ -21,13 +21,7 @@ pub enum ConfirmEmailError {
 
 impl std::fmt::Debug for ConfirmEmailError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{}\n", self)?;
-        let mut current = self.source();
-        while let Some(cause) = current {
-            writeln!(f, "Caused by:\n\t{}", cause)?;
-            current = cause.source();
-        }
-        Ok(())
+        error_chain_fmt(self, f)
     }
 }
 
