@@ -1,8 +1,8 @@
+use actix_web::cookie::Cookie;
 use actix_web::error::InternalError;
 use actix_web::http::header::LOCATION;
 use actix_web::{web, HttpResponse};
-use hmac::{Hmac, Mac};
-use secrecy::{ExposeSecret, Secret};
+use secrecy::Secret;
 use sqlx::PgPool;
 
 use crate::authentication::AuthError;
@@ -43,16 +43,9 @@ pub async fn login(
                 AuthError::InvalidCredentials(_) => LoginError::AuthError(e.into()),
                 AuthError::UnexpectedError(_) => LoginError::UnexpectedError(e.into()),
             };
-            let query_string = format!("error={}", urlencoding::Encoded::new(e.to_string()));
-            let hmac_tag = {
-                let mut mac =
-                    Hmac::<sha2::Sha256>::new_from_slice(secret.0.expose_secret().as_bytes())
-                        .unwrap();
-                mac.update(query_string.as_bytes());
-                mac.finalize().into_bytes()
-            };
             let response = HttpResponse::SeeOther()
-                .insert_header((LOCATION, format!("/login?{query_string}&tag={hmac_tag:x}")))
+                .insert_header((LOCATION, "/login"))
+                .cookie(Cookie::new("_flash", e.to_string()))
                 .finish();
             Err(InternalError::from_response(e, response))
         }
@@ -61,7 +54,7 @@ pub async fn login(
 
 #[derive(thiserror::Error)]
 pub enum LoginError {
-    #[error("Authentication failed.")]
+    #[error("Authentication failed")]
     AuthError(#[source] anyhow::Error),
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),

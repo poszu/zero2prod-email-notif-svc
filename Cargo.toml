@@ -42,10 +42,7 @@ serde-aux = "3"
 secrecy = { version = "0.8", features = ["serde"] }
 unicode-segmentation = "1.9.0"
 validator = "0.14.0"
-reqwest = { version = "0.11", default-features = false, features = [
-    "json",
-    "rustls-tls",
-] }
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls", "cookies"] }
 rand = { version = "0.8", features = ["std_rng"] }
 thiserror = "1.0.31"
 anyhow = "1.0.57"
@@ -53,9 +50,6 @@ base64 = "0.13.0"
 argon2 = { version = "0.4.0", features = ["std"] }
 urlencoding = "2.1.0"
 htmlescape = "0.3.1"
-hmac = { version = "0.12.1", features = ["std"] }
-sha2 = "0.10.2"
-hex = "0.4.3"
 
 [dev-dependencies]
 actix-rt = "2.1"
