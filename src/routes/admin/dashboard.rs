@@ -1,18 +1,10 @@
-use actix_session::Session;
 use actix_web::{http::header::ContentType, web, HttpResponse};
 use anyhow::Context;
 use reqwest::header::LOCATION;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::session_state::TypedSession;
-
-fn e500<T>(e: T) -> actix_web::Error
-where
-    T: std::fmt::Debug + std::fmt::Display + 'static,
-{
-    actix_web::error::ErrorInternalServerError(e)
-}
+use crate::{session_state::TypedSession, utils::e500};
 
 #[tracing::instrument(
     skip(pool, session),
@@ -36,7 +28,7 @@ pub async fn admin_dashboard(
 }
 
 #[tracing::instrument(name = "Get username", skip(pool))]
-async fn get_username(user_id: Uuid, pool: &PgPool) -> Result<String, anyhow::Error> {
+pub async fn get_username(user_id: Uuid, pool: &PgPool) -> Result<String, anyhow::Error> {
     let row = sqlx::query!(r#"SELECT username FROM users WHERE user_id = $1"#, user_id)
         .fetch_one(pool)
         .await
