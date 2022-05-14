@@ -1,6 +1,9 @@
 mod dashboard;
 pub use dashboard::admin_dashboard;
 
+mod newsletter;
+pub use newsletter::*;
+
 mod password;
 pub use password::*;
 
