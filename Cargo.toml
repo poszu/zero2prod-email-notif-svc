@@ -27,7 +27,7 @@ sqlx = { version = "0.5.7", default-features = false, features = [
     "offline",
 ] }
 config = "0.11"
-uuid = { version = "0.8.2", features = ["v4"] }
+uuid = { version = "0.8.2", features = ["v4", "serde"] }
 chrono = "0.4"
 
 tracing = { version = "0.1", features = ["log"] }
@@ -45,10 +45,16 @@ validator = "0.14.0"
 reqwest = { version = "0.11", default-features = false, features = [
     "json",
     "rustls-tls",
+    "cookies",
 ] }
 rand = { version = "0.8", features = ["std_rng"] }
 thiserror = "1.0.31"
 anyhow = "1.0.57"
+argon2 = { version = "0.4.0", features = ["std"] }
+actix-web-flash-messages = { version = "0.3.2", features = ["cookies"] }
+actix-session = { version = "0.6.2", features = ["redis-rs-tls-session"] }
+serde_json = "1.0.81"
+actix-web-lab = "0.16.1"
 
 [dev-dependencies]
 actix-rt = "2.1"
@@ -58,6 +64,5 @@ linkify = "0.8.1"
 once_cell = "1"
 quickcheck = "0.9"
 quickcheck_macros = "0.9"
-serde_json = "1.0.80"
 tokio = { version = "1", features = ["rt", "macros"] }
 wiremock = "0.5.13"
