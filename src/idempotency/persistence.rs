@@ -20,6 +20,7 @@ impl PgHasArrayType for HeaderPairRecord {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum NextAction {
     StartProcessing(Transaction<'static, Postgres>),
     ReturnSavedReponse(HttpResponse),
