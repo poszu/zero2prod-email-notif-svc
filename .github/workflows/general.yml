@@ -18,6 +18,12 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
           POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --name postgres_container
         ports:
           - 5432:5432
       redis:
@@ -27,6 +33,7 @@ jobs:
     env:
       SQLX_VERSION: 0.5.7
       SQLX_FEATURES: postgres
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -69,6 +76,15 @@ jobs:
             --features=${{ env.SQLX_FEATURES }}
             --no-default-features
             --locked
+
+      - name: Increase max_connections and shared_buffers
+        run: |
+          docker exec -i postgres_container bash << EOF
+            sed -i -e 's/max_connections = 100/max_connections = 1000/' /var/lib/postgresql/data/postgresql.conf
+            sed -i -e 's/shared_buffers = 128MB/shared_buffers = 2GB/' /var/lib/postgresql/data/postgresql.conf
+          EOF
+      - run: docker restart --time 0 postgres_container
+      - run: sleep 5
 
       - name: Migrate database
         run: |
@@ -170,6 +186,12 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
           POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --name postgres_container
         ports:
           - 5432:5432
       redis:
@@ -210,6 +232,15 @@ jobs:
             --features=${{ env.SQLX_FEATURES }}
             --no-default-features
             --locked
+
+      - name: Increase max_connections and shared_buffers
+        run: |
+          docker exec -i postgres_container bash << EOF
+            sed -i -e 's/max_connections = 100/max_connections = 1000/' /var/lib/postgresql/data/postgresql.conf
+            sed -i -e 's/shared_buffers = 128MB/shared_buffers = 2GB/' /var/lib/postgresql/data/postgresql.conf
+          EOF
+      - run: docker restart --time 0 postgres_container
+      - run: sleep 5
 
       - name: Migrate database
         run: |
